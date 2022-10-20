@@ -1,4 +1,5 @@
 # aruba-rs
+
 Test **command-line** applications written in **Rust** using the
 [Cucumber testing framework for Rust](https://github.com/cucumber-rs/cucumber).
 
