@@ -1,0 +1,5 @@
+[workspace]
+members = [
+	"aruba",
+	"examples/aruba_hello_world",
+]
