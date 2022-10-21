@@ -1,14 +1,11 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+pub mod cucumber_parameters;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+pub mod text {
+    pub fn sanitize_text(text: &str) -> String {
+        //DO WE NEED THESE?
+        //let text = unescape_text(text);
+        //let text = extract_text(text) if aruba.config.remove_ansi_escape_sequences
+        text.trim_end().to_owned()
     }
 }
+
