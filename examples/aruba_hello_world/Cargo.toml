@@ -8,3 +8,12 @@ publish = false
 
 [dependencies]
 clap = { version = "4.0.17", features = ["derive"] }
+
+[dev-dependencies]
+aruba = { path = "../../aruba" }
+cucumber = "0.15"
+futures = "0.3"
+
+[[test]]
+name = "cucumber_aruba_example" # see tests/cucumber_aruba_example.rs
+harness = false                 # allow Cucumber to print output instead of libtest
