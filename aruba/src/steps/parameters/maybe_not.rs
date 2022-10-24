@@ -1,5 +1,5 @@
-use cucumber::Parameter;
 use std::str::FromStr;
+use cucumber::Parameter;
 
 #[derive(Debug, Default, Eq, Parameter, PartialEq)]
 #[param(name = "maybe_not", regex = "( not)?")]

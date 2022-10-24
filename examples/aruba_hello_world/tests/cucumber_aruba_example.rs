@@ -1,5 +1,5 @@
 use std::process::Command;
-use aruba::cucumber_parameters::MaybeNot;
+use aruba::steps::parameters::MaybeNot;
 use aruba::text::sanitize_text;
 use cucumber::{given, then, Parameter, World, when};
 
@@ -34,7 +34,7 @@ mod copy_from_aruba {
 }
 /// END COPY FROM ARUBA
 
-// use aruba::step_definitions::run_and_wait_step;
+// use aruba::steps::run_and_wait_step;
 // impl ArubaWorld for ArubaHelloWorld {
 //     fn last_command_run(&self) -> &Option<Command> {
 //         &None
