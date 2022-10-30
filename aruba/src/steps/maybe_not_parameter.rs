@@ -21,6 +21,7 @@ impl FromStr for MaybeNotParameter {
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<bool> for MaybeNotParameter {
     fn into(self) -> bool {
         match self {

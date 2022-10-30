@@ -3,14 +3,13 @@ use crate::prelude::*;
 
 #[when(expr = "I run {command_line}")]
 pub fn run_and_wait_step(world: &mut ArubaWorld, command_line: CommandLineParameter) {
-    world.run_and_wait(&command_line.as_ref());
+    world.run_and_wait(command_line.as_ref());
 }
 
 #[then(expr = "the exit status code should{maybe_not}be {int}")]
 pub fn exit_status_step(world: &mut ArubaWorld, should: MaybeNotParameter, expected: i32) {
     let status = world.last_command_exit_status();
     let code = status.code().unwrap_or_else(|| panic!("Exit status without code: {}", &status));
-
     if should.into() {
         assert_eq!(code, expected);
     } else {
