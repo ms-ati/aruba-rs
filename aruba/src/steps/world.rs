@@ -1,21 +1,37 @@
-use std::process::ExitStatus;
-use crate::api::commands::{run_and_wait, ChildInPath, ExistingOrMakeTemp};
+use std::process::{ExitStatus, Output};
+use crate::api::commands::{run, CommandRun, ExistingOrMakeTemp};
 
 #[derive(Debug, Default, cucumber::World)]
 pub struct ArubaWorld {
-    last_command_run: Option<ChildInPath>
+    pub last_command_run: Option<CommandRun>
 }
 
 impl ArubaWorld {
-    pub fn run_and_wait(&mut self, command_line: &str) {
-        let in_path = ExistingOrMakeTemp::MakeTempWithPrefix("".to_string());
-        let child_in_path = run_and_wait(command_line, in_path).unwrap();
-        self.last_command_run = Some(child_in_path);
+    pub fn run_command(&mut self, command_line: &str) {
+        let in_temp_dir = ExistingOrMakeTemp::MakeTempWithPrefix("".to_string());
+        self.last_command_run = Some(run(command_line, in_temp_dir).unwrap());
     }
 
-    pub fn last_command_exit_status(&mut self) -> ExitStatus {
-        let child_in_path = &mut self.last_command_run.as_mut().expect("No command has been run");
-        let child = &mut child_in_path.child;
-        child.wait().unwrap()
+    pub fn last_command_output(&mut self) -> &Output {
+        let command_run = self.last_command_run.as_mut().expect("No command has been run");
+        command_run.process.wait_for_output().unwrap()
+    }
+
+    pub fn last_command_exit_status(&mut self) -> &ExitStatus {
+        &self.last_command_output().status
+    }
+
+    pub fn last_command_stdout(&mut self) -> &Vec<u8> {
+        &self.last_command_output().stdout
+    }
+
+    pub fn last_command_stderr(&mut self) -> &Vec<u8> {
+        &self.last_command_output().stderr
+    }
+
+    pub fn last_command_all_output(&mut self) -> Vec<u8> {
+        let mut all = self.last_command_stdout().clone();
+        all.extend(self.last_command_stderr());
+        all
     }
 }

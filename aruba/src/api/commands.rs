@@ -2,15 +2,16 @@ use std::{env, io};
 use std::ffi::OsString;
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command};
+use std::process::{Child, Command, Output, Stdio};
 
 use lazy_static::lazy_static;
 use tempfile::TempDir;
 
 #[derive(Debug)]
-pub struct ChildInPath {
-    pub child: Child,
-    pub path_or_temp: PathOrTemp,
+pub struct CommandRun {
+    pub in_path: PathOrTemp,
+    pub command: Command,
+    pub process: ProcessState,
 }
 
 /// We create temporary directories, which will automatically deleted. When
@@ -48,25 +49,48 @@ impl TryInto<PathOrTemp> for ExistingOrMakeTemp {
     }
 }
 
-pub fn run_and_wait(command_line: &str, in_path: ExistingOrMakeTemp) -> io::Result<ChildInPath> {
-    let mut child_in_path = run(command_line, in_path)?;
-    let _ = child_in_path.child.wait()?;
-    Ok(child_in_path)
+#[derive(Debug)]
+pub enum ProcessState {
+    Running(Option<Child>),
+    Stopped(Output),
 }
 
-pub fn run(command_line: &str, in_path: ExistingOrMakeTemp) -> io::Result<ChildInPath> {
-    let path_or_temp = in_path.try_into()?;
+impl From<Child> for ProcessState {
+    fn from(child: Child) -> Self {
+        Self::Running(Some(child))
+    }
+}
 
-    // path env
+impl ProcessState {
+    pub fn wait_for_output(&mut self) -> io::Result<&Output> {
+        if let ProcessState::Running(maybe_child) = self {
+            let child = maybe_child.take().expect("Invalid state: no child process");
+            let output = child.wait_with_output()?;
+            *self = ProcessState::Stopped(output);
+        }
 
-    let child = Command::new("sh")
+        match self {
+            ProcessState::Running(_) => unreachable!(),
+            ProcessState::Stopped(ref output) => Ok(&output)
+        }
+    }
+}
+
+pub fn run(command_line: &str, in_path: ExistingOrMakeTemp) -> io::Result<CommandRun> {
+    let in_path: PathOrTemp = in_path.try_into()?;
+
+    let mut command = Command::new("sh");
+    command
         .arg("-c")
         .arg(text::sanitize_command(command_line))
-        .current_dir(&path_or_temp)
+        .current_dir(&in_path)
         .env("PATH", env_path_prepend_target_dir()?)
-        .spawn()?;
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
 
-    Ok(ChildInPath { child, path_or_temp })
+    let process = ProcessState::Running(Some(command.spawn()?));
+
+    Ok(CommandRun { in_path, command, process })
 }
 
 pub fn make_temp_dir(prefix: String) -> io::Result<PathOrTemp> {

@@ -1,5 +1,5 @@
 use aruba::prelude::ArubaWorld;
-use cucumber::{when, World};
+use cucumber::World;
 
 fn main() {
     // You may choose any executor you like (`tokio`, `async-std`, etc.).
