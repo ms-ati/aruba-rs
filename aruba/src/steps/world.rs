@@ -17,8 +17,9 @@ impl ArubaWorld {
         command_run.process.wait_for_output().unwrap()
     }
 
-    pub fn last_command_exit_status(&mut self) -> &ExitStatus {
-        &self.last_command_output().status
+    pub fn last_command_exit_status_code(&mut self) -> i32 {
+        let status = &self.last_command_output().status;
+        status.code().unwrap_or_else(|| panic!("Exit status without code: {:?}", status))
     }
 
     pub fn last_command_stdout(&mut self) -> &Vec<u8> {

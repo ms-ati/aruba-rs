@@ -82,7 +82,7 @@ pub fn run(command_line: &str, in_path: ExistingOrMakeTemp) -> io::Result<Comman
     let mut command = Command::new("sh");
     command
         .arg("-c")
-        .arg(text::sanitize_command(command_line))
+        .arg(crate::api::text::sanitize_command(command_line))
         .current_dir(&in_path)
         .env("PATH", env_path_prepend_target_dir()?)
         .stdout(Stdio::piped())
@@ -94,7 +94,7 @@ pub fn run(command_line: &str, in_path: ExistingOrMakeTemp) -> io::Result<Comman
 }
 
 pub fn make_temp_dir(prefix: String) -> io::Result<PathOrTemp> {
-    let sanitized_prefix = text::sanitize_temp_dir(&prefix);
+    let sanitized_prefix = crate::api::text::sanitize_temp_dir(&prefix);
     let tmp_dir = tempfile::Builder::new()
         .prefix(&sanitized_prefix)
         .tempdir()?;
@@ -135,21 +135,4 @@ pub fn dir_contains_cargo_dot_lock(dir: &Path) -> io::Result<bool> {
         .map(|result| result.map(|dir_ent| dir_ent.file_name()).unwrap_or_default())
         .any(|os_str| CARGO_DOT_LOCK.eq(&os_str));
     Ok(found_cargo_dot_lock)
-}
-
-mod text {
-    use lazy_static::lazy_static;
-    use regex::Regex;
-
-    pub fn sanitize_command(text: &str) -> String {
-        //DO WE NEED THESE?
-        //let text = unescape_text(text);
-        //let text = extract_text(text) if aruba.config.remove_ansi_escape_sequences
-        text.trim().to_owned()
-    }
-
-    pub fn sanitize_temp_dir(prefix: &str) -> String {
-        lazy_static! { static ref RE_NON_WORDS: Regex = Regex::new(r"\W").unwrap(); }
-        RE_NON_WORDS.replace_all(prefix.to_lowercase().as_str(), "-").to_string()
-    }
 }
