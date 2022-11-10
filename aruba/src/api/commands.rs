@@ -1,8 +1,8 @@
-use std::{env, io};
 use std::ffi::OsString;
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Output, Stdio};
+use std::{env, io};
 
 use lazy_static::lazy_static;
 use tempfile::TempDir;
@@ -28,14 +28,14 @@ impl AsRef<Path> for PathOrTemp {
     fn as_ref(&self) -> &Path {
         match &self {
             PathOrTemp::Path(p) => p.as_ref(),
-            PathOrTemp::Temp(t) => t.path()
+            PathOrTemp::Temp(t) => t.path(),
         }
     }
 }
 
 pub enum ExistingOrMakeTemp {
     ExistingPathOrTemp(PathOrTemp),
-    MakeTempWithPrefix(String)
+    MakeTempWithPrefix(String),
 }
 
 impl TryInto<PathOrTemp> for ExistingOrMakeTemp {
@@ -44,7 +44,7 @@ impl TryInto<PathOrTemp> for ExistingOrMakeTemp {
     fn try_into(self) -> Result<PathOrTemp, Self::Error> {
         match self {
             Self::ExistingPathOrTemp(path_or_temp) => Ok(path_or_temp),
-            Self::MakeTempWithPrefix(prefix)       => make_temp_dir(prefix)
+            Self::MakeTempWithPrefix(prefix) => make_temp_dir(prefix),
         }
     }
 }
@@ -71,7 +71,7 @@ impl ProcessState {
 
         match self {
             ProcessState::Running(_) => unreachable!(),
-            ProcessState::Stopped(ref output) => Ok(output)
+            ProcessState::Stopped(ref output) => Ok(output),
         }
     }
 }
@@ -90,7 +90,11 @@ pub fn run(command_line: &str, in_path: ExistingOrMakeTemp) -> io::Result<Comman
 
     let process = ProcessState::Running(Some(command.spawn()?));
 
-    Ok(CommandRun { in_path, command, process })
+    Ok(CommandRun {
+        in_path,
+        command,
+        process,
+    })
 }
 
 pub fn make_temp_dir(prefix: String) -> io::Result<PathOrTemp> {
@@ -106,8 +110,7 @@ pub fn env_path_prepend_target_dir() -> io::Result<OsString> {
     let env_path = env::var_os("PATH").unwrap_or_default();
     let mut paths = vec![find_project_target_dir()?];
     paths.extend(env::split_paths(&env_path));
-    env::join_paths(paths.iter()).
-        map_err(|err| Error::new(ErrorKind::InvalidData, err.to_string()))
+    env::join_paths(paths.iter()).map_err(|err| Error::new(ErrorKind::InvalidData, err.to_string()))
 }
 
 pub fn find_project_target_dir() -> io::Result<PathBuf> {
@@ -124,15 +127,24 @@ pub fn find_project_root_dir() -> io::Result<PathBuf> {
         .map(|path| path.to_path_buf());
 
     maybe_project_root_dir.ok_or_else(|| {
-        let err_msg = format!("Cargo.lock not found in paths above: {}", current_dir.display());
+        let err_msg = format!(
+            "Cargo.lock not found in paths above: {}",
+            current_dir.display()
+        );
         io::Error::new(io::ErrorKind::NotFound, err_msg)
     })
 }
 
 pub fn dir_contains_cargo_dot_lock(dir: &Path) -> io::Result<bool> {
-    lazy_static! { static ref CARGO_DOT_LOCK: OsString = OsString::from("Cargo.lock"); }
+    lazy_static! {
+        static ref CARGO_DOT_LOCK: OsString = OsString::from("Cargo.lock");
+    }
     let found_cargo_dot_lock = read_dir(dir)?
-        .map(|result| result.map(|dir_ent| dir_ent.file_name()).unwrap_or_default())
+        .map(|result| {
+            result
+                .map(|dir_ent| dir_ent.file_name())
+                .unwrap_or_default()
+        })
         .any(|os_str| CARGO_DOT_LOCK.eq(&os_str));
     Ok(found_cargo_dot_lock)
 }

@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use cucumber::Parameter;
+use std::str::FromStr;
 
 #[derive(Debug, Default, Eq, Parameter, PartialEq)]
 #[param(name = "command_line", regex = "`([^`]+)`")]
@@ -26,8 +26,8 @@ mod tests {
     #[test]
     fn command_line_parameter_from_str_table() {
         let table: [(&str, Result<CommandLineParameter, String>); 3] = [
-            ("``",      Ok(CommandLineParameter("".to_string()))),
-            ("`ls`",    Ok(CommandLineParameter("ls".to_string()))),
+            ("``", Ok(CommandLineParameter("".to_string()))),
+            ("`ls`", Ok(CommandLineParameter("ls".to_string()))),
             ("`ls -l`", Ok(CommandLineParameter("ls -l".to_string()))),
         ];
 

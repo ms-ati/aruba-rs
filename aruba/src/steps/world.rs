@@ -1,9 +1,9 @@
-use std::process::Output;
 use crate::api::commands::{run, CommandRun, ExistingOrMakeTemp};
+use std::process::Output;
 
 #[derive(Debug, Default, cucumber::World)]
 pub struct ArubaWorld {
-    pub last_command_run: Option<CommandRun>
+    pub last_command_run: Option<CommandRun>,
 }
 
 impl ArubaWorld {
@@ -13,13 +13,18 @@ impl ArubaWorld {
     }
 
     pub fn last_command_output(&mut self) -> &Output {
-        let command_run = self.last_command_run.as_mut().expect("No command has been run");
+        let command_run = self
+            .last_command_run
+            .as_mut()
+            .expect("No command has been run");
         command_run.process.wait_for_output().unwrap()
     }
 
     pub fn last_command_exit_status_code(&mut self) -> i32 {
         let status = &self.last_command_output().status;
-        status.code().unwrap_or_else(|| panic!("Exit status without code: {:?}", status))
+        status
+            .code()
+            .unwrap_or_else(|| panic!("Exit status without code: {:?}", status))
     }
 
     pub fn last_command_stdout(&mut self) -> &Vec<u8> {

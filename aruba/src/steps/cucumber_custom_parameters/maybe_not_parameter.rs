@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use cucumber::Parameter;
+use std::str::FromStr;
 
 #[derive(Debug, Default, Eq, Parameter, PartialEq)]
 #[param(name = "maybe_not", regex = " | not ")]
@@ -14,9 +14,14 @@ impl FromStr for MaybeNotParameter {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            " "     => Self::NoNot,
+            " " => Self::NoNot,
             " not " => Self::YesNot,
-            invalid => return Err(format!("Invalid cucumber `MaybeNotParameter`: {:?}", invalid)),
+            invalid => {
+                return Err(format!(
+                    "Invalid cucumber `MaybeNotParameter`: {:?}",
+                    invalid
+                ))
+            }
         })
     }
 }
@@ -26,7 +31,7 @@ impl Into<bool> for MaybeNotParameter {
     fn into(self) -> bool {
         match self {
             Self::NoNot => true,
-            Self::YesNot => false
+            Self::YesNot => false,
         }
     }
 }
@@ -38,9 +43,12 @@ mod tests {
     #[test]
     fn maybe_not_parameter_from_str_table() {
         let table: [(&str, Result<MaybeNotParameter, String>); 3] = [
-            (" ",     Ok(MaybeNotParameter::NoNot)),
+            (" ", Ok(MaybeNotParameter::NoNot)),
             (" not ", Ok(MaybeNotParameter::YesNot)),
-            ("",      Err("Invalid cucumber `MaybeNotParameter`: \"\"".to_string())),
+            (
+                "",
+                Err("Invalid cucumber `MaybeNotParameter`: \"\"".to_string()),
+            ),
         ];
 
         for (input, expected) in &table {
@@ -52,7 +60,7 @@ mod tests {
     #[test]
     fn maybe_not_parameter_into_bool_table() {
         let table: [(MaybeNotParameter, bool); 2] = [
-            (MaybeNotParameter::NoNot,  true),
+            (MaybeNotParameter::NoNot, true),
             (MaybeNotParameter::YesNot, false),
         ];
 

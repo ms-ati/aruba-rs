@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use cucumber::Parameter;
+use std::str::FromStr;
 
 #[derive(Debug, Default, Eq, Parameter, PartialEq)]
 #[param(name = "output_channel", regex = "output|stdout|stderr")]
@@ -18,8 +18,12 @@ impl FromStr for OutputChannelParameter {
             "output" => Self::AllOutput,
             "stdout" => Self::Stdout,
             "stderr" => Self::Stderr,
-            invalid =>
-                return Err(format!("Invalid cucumber `OutputChannelParameter`: {:?}", invalid)),
+            invalid => {
+                return Err(format!(
+                    "Invalid cucumber `OutputChannelParameter`: {:?}",
+                    invalid
+                ))
+            }
         })
     }
 }
@@ -34,7 +38,10 @@ mod tests {
             ("output", Ok(OutputChannelParameter::AllOutput)),
             ("stdout", Ok(OutputChannelParameter::Stdout)),
             ("stderr", Ok(OutputChannelParameter::Stderr)),
-            ("",      Err("Invalid cucumber `OutputChannelParameter`: \"\"".to_string())),
+            (
+                "",
+                Err("Invalid cucumber `OutputChannelParameter`: \"\"".to_string()),
+            ),
         ];
 
         for (input, expected) in &table {

@@ -9,8 +9,12 @@ pub fn sanitize_command(text: &str) -> String {
 }
 
 pub fn sanitize_temp_dir(prefix: &str) -> String {
-    lazy_static! { static ref RE_NON_WORDS: Regex = Regex::new(r"\W").unwrap(); }
-    RE_NON_WORDS.replace_all(prefix.to_lowercase().as_str(), "-").to_string()
+    lazy_static! {
+        static ref RE_NON_WORDS: Regex = Regex::new(r"\W").unwrap();
+    }
+    RE_NON_WORDS
+        .replace_all(prefix.to_lowercase().as_str(), "-")
+        .to_string()
 }
 
 /// WORKAROUND: Rust Gherkin `Step::docstring()` always starts with a newline
