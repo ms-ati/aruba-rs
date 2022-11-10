@@ -71,7 +71,7 @@ impl ProcessState {
 
         match self {
             ProcessState::Running(_) => unreachable!(),
-            ProcessState::Stopped(ref output) => Ok(&output)
+            ProcessState::Stopped(ref output) => Ok(output)
         }
     }
 }

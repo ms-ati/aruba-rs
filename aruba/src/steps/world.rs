@@ -1,4 +1,4 @@
-use std::process::{ExitStatus, Output};
+use std::process::Output;
 use crate::api::commands::{run, CommandRun, ExistingOrMakeTemp};
 
 #[derive(Debug, Default, cucumber::World)]

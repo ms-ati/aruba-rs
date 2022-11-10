@@ -1,6 +1,6 @@
 use std::str::FromStr;
 use bstr::ByteSlice;
-use cucumber::{then, when, World};
+use cucumber::{then, when};
 use cucumber::gherkin::Step;
 use pretty_assertions::{assert_eq, assert_ne};
 use crate::api::text::trim_prefix_single_newline;
@@ -52,7 +52,7 @@ pub fn output_contains_docstring_step(world: &mut ArubaWorld, channel_string: St
         Ok(output) => assert_eq!(output, expected),
         Err(error) => {
             let output_bytes = error.into_bytes();
-            assert!(output_bytes.contains_str(&expected));
+            assert!(output_bytes.contains_str(expected));
         },
     }
 }

@@ -17,6 +17,6 @@ pub fn sanitize_temp_dir(prefix: &str) -> String {
 pub fn trim_prefix_single_newline(docstring: &String) -> &str {
     docstring
         .strip_prefix("\r\n")
-        .or(docstring.strip_prefix("\n"))
+        .or_else(|| docstring.strip_prefix('\n'))
         .unwrap_or(docstring)
 }
