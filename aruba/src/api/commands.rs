@@ -79,10 +79,10 @@ pub fn run(command_line: &str, in_path: ExistingOrMakeTemp) -> io::Result<Comman
 
 pub fn make_temp_dir(prefix: String) -> io::Result<PathOrTemp> {
     let sanitized_prefix = crate::api::text::sanitize_temp_dir(&prefix);
-    let tmp_dir = tempfile::Builder::new()
+    let temp_dir = tempfile::Builder::new()
         .prefix(&sanitized_prefix)
         .tempdir()?;
-    Ok(PathOrTemp::Temp(tmp_dir))
+    Ok(PathOrTemp::Temp(temp_dir))
 }
 
 pub fn env_path_prepend_target_dir() -> io::Result<OsString> {
