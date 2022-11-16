@@ -2,6 +2,7 @@ use crate::api::PathOrTemp;
 use lazy_static::lazy_static;
 use std::ffi::OsString;
 use std::fs::read_dir;
+use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Output, Stdio};
 use std::{env, io};
@@ -29,29 +30,32 @@ impl TryInto<PathOrTemp> for ExistingOrMakeTemp {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub enum ProcessState {
-    Running(Option<Child>),
+    Running(Child),
     Stopped(Output),
+    #[default]
+    Unknown,
 }
 
 impl From<Child> for ProcessState {
     fn from(child: Child) -> Self {
-        Self::Running(Some(child))
+        Self::Running(child)
     }
 }
 
 impl ProcessState {
     pub fn wait_for_output(&mut self) -> io::Result<&Output> {
-        if let ProcessState::Running(maybe_child) = self {
-            let child = maybe_child.take().expect("Invalid state: no child process");
-            let output = child.wait_with_output()?;
-            *self = ProcessState::Stopped(output);
+        // See https://stackoverflow.com/questions/68247811/is-there-a-safe-way-to-map-an-enum-variant-to-another-with-just-a-mutable-refere
+        match std::mem::replace(self, Self::Unknown) {
+            Self::Running(child) => *self = Self::Stopped(child.wait_with_output()?),
+            s @ Self::Stopped(_) => *self = s,
+            Self::Unknown => return Err(Error::new(ErrorKind::Other, "Process in unknown state")),
         }
 
         match self {
-            ProcessState::Running(_) => unreachable!(),
             ProcessState::Stopped(ref output) => Ok(output),
+            _ => unreachable!(),
         }
     }
 }
@@ -68,7 +72,7 @@ pub fn run(command_line: &str, in_path: ExistingOrMakeTemp) -> io::Result<Comman
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
-    let process = ProcessState::Running(Some(command.spawn()?));
+    let process = ProcessState::Running(command.spawn()?);
 
     Ok(CommandRun {
         in_path,
@@ -86,7 +90,6 @@ pub fn make_temp_dir(prefix: String) -> io::Result<PathOrTemp> {
 }
 
 pub fn env_path_prepend_target_dir() -> io::Result<OsString> {
-    use io::{Error, ErrorKind};
     let env_path = env::var_os("PATH").unwrap_or_default();
     let mut paths = vec![find_project_target_dir()?];
     paths.extend(env::split_paths(&env_path));
