@@ -1,4 +1,6 @@
+use crate::api::command_run::ExistingOrFromPrefix;
 use lazy_static::lazy_static;
+use std::io;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
@@ -11,6 +13,27 @@ pub enum PathOrTemp {
     Temp(TempDir),
     #[default]
     Empty, // Note: used only to release ownership during transition from Temp to Path
+}
+
+impl PathOrTemp {
+    fn new_temp_from_prefix(prefix: &str) -> io::Result<PathOrTemp> {
+        let sanitized_prefix = crate::api::text::sanitize_temp_dir(prefix);
+        let temp_dir = tempfile::Builder::new()
+            .prefix(&sanitized_prefix)
+            .tempdir()?;
+        Ok(PathOrTemp::Temp(temp_dir))
+    }
+}
+
+impl TryFrom<ExistingOrFromPrefix> for PathOrTemp {
+    type Error = io::Error;
+
+    fn try_from(value: ExistingOrFromPrefix) -> Result<Self, Self::Error> {
+        match value {
+            ExistingOrFromPrefix::PathOrTemp(p) => Ok(p),
+            ExistingOrFromPrefix::FromPrefix(p) => PathOrTemp::new_temp_from_prefix(&p),
+        }
+    }
 }
 
 /// Safely obtain an `&Path` reference from `TempDir`

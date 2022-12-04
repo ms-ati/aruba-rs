@@ -1,4 +1,5 @@
-use crate::api::commands::{run, CommandRun, ExistingOrFromPrefix};
+use crate::api::command_run::ExistingOrFromPrefix;
+use crate::api::CommandRun;
 use std::process::Output;
 
 #[derive(Debug, Default, cucumber::World)]
@@ -9,7 +10,7 @@ pub struct ArubaWorld {
 impl ArubaWorld {
     pub fn run_command(&mut self, command_line: &str) {
         let in_temp_dir = ExistingOrFromPrefix::FromPrefix("".to_string());
-        self.last_command_run = Some(run(command_line, in_temp_dir).unwrap());
+        self.last_command_run = Some(CommandRun::new(command_line, in_temp_dir).unwrap());
     }
 
     pub fn last_command_output(&mut self) -> &Output {
