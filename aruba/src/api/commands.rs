@@ -2,7 +2,6 @@ use crate::api::PathOrTemp;
 use lazy_static::lazy_static;
 use std::ffi::OsString;
 use std::fs::read_dir;
-use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Output, Stdio};
 use std::{env, io};
@@ -14,18 +13,18 @@ pub struct CommandRun {
     pub process: ProcessState,
 }
 
-pub enum ExistingOrMakeTemp {
-    ExistingPathOrTemp(PathOrTemp),
-    MakeTempWithPrefix(String),
+pub enum ExistingOrFromPrefix {
+    PathOrTemp(PathOrTemp),
+    FromPrefix(String),
 }
 
-impl TryInto<PathOrTemp> for ExistingOrMakeTemp {
+impl TryInto<PathOrTemp> for ExistingOrFromPrefix {
     type Error = io::Error;
 
     fn try_into(self) -> Result<PathOrTemp, Self::Error> {
         match self {
-            Self::ExistingPathOrTemp(path_or_temp) => Ok(path_or_temp),
-            Self::MakeTempWithPrefix(prefix) => make_temp_dir(prefix),
+            Self::PathOrTemp(exists) => Ok(exists),
+            Self::FromPrefix(prefix) => make_temp_dir(prefix),
         }
     }
 }
@@ -38,19 +37,13 @@ pub enum ProcessState {
     Unknown,
 }
 
-impl From<Child> for ProcessState {
-    fn from(child: Child) -> Self {
-        Self::Running(child)
-    }
-}
-
 impl ProcessState {
     pub fn wait_for_output(&mut self) -> io::Result<&Output> {
         // See https://stackoverflow.com/questions/68247811/is-there-a-safe-way-to-map-an-enum-variant-to-another-with-just-a-mutable-refere
         match std::mem::replace(self, Self::Unknown) {
             Self::Running(child) => *self = Self::Stopped(child.wait_with_output()?),
             s @ Self::Stopped(_) => *self = s,
-            Self::Unknown => return Err(Error::new(ErrorKind::Other, "Process in unknown state")),
+            Self::Unknown => return Err(io::Error::new(io::ErrorKind::Other, "Unknown run state")),
         }
 
         match self {
@@ -60,7 +53,7 @@ impl ProcessState {
     }
 }
 
-pub fn run(command_line: &str, in_path: ExistingOrMakeTemp) -> io::Result<CommandRun> {
+pub fn run(command_line: &str, in_path: ExistingOrFromPrefix) -> io::Result<CommandRun> {
     let in_path: PathOrTemp = in_path.try_into()?;
 
     let mut command = Command::new("sh");
@@ -93,7 +86,8 @@ pub fn env_path_prepend_target_dir() -> io::Result<OsString> {
     let env_path = env::var_os("PATH").unwrap_or_default();
     let mut paths = vec![find_project_target_dir()?];
     paths.extend(env::split_paths(&env_path));
-    env::join_paths(paths.iter()).map_err(|err| Error::new(ErrorKind::InvalidData, err.to_string()))
+    env::join_paths(paths.iter())
+        .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err.to_string()))
 }
 
 pub fn find_project_target_dir() -> io::Result<PathBuf> {

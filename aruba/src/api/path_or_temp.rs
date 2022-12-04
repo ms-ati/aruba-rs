@@ -10,20 +10,20 @@ pub enum PathOrTemp {
     Path(PathBuf),
     Temp(TempDir),
     #[default]
-    Default,
+    Empty, // Note: used only to release ownership during transition from Temp to Path
 }
 
 /// Safely obtain an `&Path` reference from `TempDir`
 impl AsRef<Path> for PathOrTemp {
     fn as_ref(&self) -> &Path {
         lazy_static! {
-            static ref DEFAULT_PATH: PathBuf = PathBuf::default();
+            static ref EMPTY_PATH: PathBuf = PathBuf::default();
         }
 
         match &self {
             Self::Path(p) => p.as_ref(),
             Self::Temp(t) => t.as_ref(),
-            Self::Default => DEFAULT_PATH.as_ref(),
+            Self::Empty => EMPTY_PATH.as_ref(),
         }
     }
 }
@@ -32,10 +32,10 @@ impl PathOrTemp {
     #[allow(dead_code)]
     fn replace_temp_with_path(&mut self) {
         // See https://stackoverflow.com/questions/68247811/is-there-a-safe-way-to-map-an-enum-variant-to-another-with-just-a-mutable-refere
-        match std::mem::replace(self, Self::Default) {
+        match std::mem::replace(self, Self::Empty) {
             Self::Path(p) => *self = Self::Path(p),
             Self::Temp(t) => *self = Self::Path(t.into_path()),
-            Self::Default => (),
+            Self::Empty => (),
         }
     }
 }
