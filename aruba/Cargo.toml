@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 bstr = "1"
-cucumber = "0.16"
+cucumber = "0.17"
 futures = "0.3"
 lazy_static = "1.4"
 pretty_assertions = "1"
