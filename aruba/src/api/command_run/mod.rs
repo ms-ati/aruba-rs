@@ -22,17 +22,9 @@ pub struct CommandRun {
 
 impl CommandRun {
     pub fn new(command_line: &str, in_path: ExistingOrFromPrefix) -> io::Result<CommandRun> {
-        let in_path: PathOrTemp = in_path.try_into()?;
-
-        let mut command = Command::new("sh");
-        command
-            .arg("-c")
-            .arg(crate::api::text::sanitize_command(command_line))
-            .current_dir(&in_path)
-            .env("PATH", Self::env_path_prepend_target_dir()?)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
-
+        let in_path = PathOrTemp::try_from(in_path)?;
+        let env_path = Self::env_path_prepend_target_dir()?;
+        let mut command = Self::mk_command(command_line, &in_path, &env_path);
         let process = ProcessState::Running(command.spawn()?);
 
         Ok(CommandRun {
@@ -42,7 +34,19 @@ impl CommandRun {
         })
     }
 
-    pub fn env_path_prepend_target_dir() -> io::Result<OsString> {
+    fn mk_command(command_line: &str, in_path: &PathOrTemp, env_path: &OsString) -> Command {
+        let mut command = Command::new("sh");
+        command
+            .arg("-c")
+            .arg(crate::api::text::sanitize_command(command_line))
+            .current_dir(in_path)
+            .env("PATH", env_path)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        command
+    }
+
+    fn env_path_prepend_target_dir() -> io::Result<OsString> {
         let env_path = env::var_os("PATH").unwrap_or_default();
         let mut paths = vec![Self::find_project_target_dir()?];
         paths.extend(env::split_paths(&env_path));
@@ -50,12 +54,12 @@ impl CommandRun {
             .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err.to_string()))
     }
 
-    pub fn find_project_target_dir() -> io::Result<PathBuf> {
+    fn find_project_target_dir() -> io::Result<PathBuf> {
         let project_root_dir = Self::find_project_root_dir()?;
         Ok(project_root_dir.join("target").join("debug"))
     }
 
-    pub fn find_project_root_dir() -> io::Result<PathBuf> {
+    fn find_project_root_dir() -> io::Result<PathBuf> {
         let current_dir = env::current_dir()?;
         let mut path_ancestors = current_dir.ancestors();
 
