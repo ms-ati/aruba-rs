@@ -34,6 +34,10 @@ impl CommandRun {
         })
     }
 
+    pub fn keep_temp_path(&mut self) {
+        self.in_path.replace_temp_with_path();
+    }
+
     fn mk_command(command_line: &str, in_path: &PathOrTemp, env_path: &OsString) -> Command {
         let mut command = Command::new("sh");
         command

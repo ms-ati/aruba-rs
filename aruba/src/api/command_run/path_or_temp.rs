@@ -16,12 +16,21 @@ pub enum PathOrTemp {
 }
 
 impl PathOrTemp {
-    fn new_temp_from_prefix(prefix: &str) -> io::Result<PathOrTemp> {
+    pub fn new_temp_from_prefix(prefix: &str) -> io::Result<PathOrTemp> {
         let sanitized_prefix = crate::api::text::sanitize_temp_dir(prefix);
         let temp_dir = tempfile::Builder::new()
             .prefix(&sanitized_prefix)
             .tempdir()?;
         Ok(PathOrTemp::Temp(temp_dir))
+    }
+
+    pub fn replace_temp_with_path(&mut self) {
+        // See https://stackoverflow.com/questions/68247811/is-there-a-safe-way-to-map-an-enum-variant-to-another-with-just-a-mutable-refere
+        match std::mem::replace(self, Self::Empty) {
+            Self::Path(p) => *self = Self::Path(p),
+            Self::Temp(t) => *self = Self::Path(t.into_path()),
+            Self::Empty => (),
+        }
     }
 }
 
@@ -47,18 +56,6 @@ impl AsRef<Path> for PathOrTemp {
             Self::Path(p) => p.as_ref(),
             Self::Temp(t) => t.as_ref(),
             Self::Empty => EMPTY_PATH.as_ref(),
-        }
-    }
-}
-
-impl PathOrTemp {
-    #[allow(dead_code)]
-    fn replace_temp_with_path(&mut self) {
-        // See https://stackoverflow.com/questions/68247811/is-there-a-safe-way-to-map-an-enum-variant-to-another-with-just-a-mutable-refere
-        match std::mem::replace(self, Self::Empty) {
-            Self::Path(p) => *self = Self::Path(p),
-            Self::Temp(t) => *self = Self::Path(t.into_path()),
-            Self::Empty => (),
         }
     }
 }
