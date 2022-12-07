@@ -1,5 +1,10 @@
 use clap::Parser;
 
+//
+// See also:
+//   - https://docs.rs/clap/latest/clap/
+//
+
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
