@@ -1,4 +1,4 @@
-use crate::api::text::trim_prefix_single_newline;
+use crate::api::text::trim_docstring_prefix_newline;
 use crate::prelude::*;
 use bstr::ByteSlice;
 use cucumber::gherkin::Step;
@@ -54,7 +54,7 @@ pub fn output_contains_docstring_step(world: &mut ArubaWorld, channel_string: St
 
     let expected = step
         .docstring()
-        .map(trim_prefix_single_newline) // WORKAROUND: Rust Gherkin doc strings start w/ new line
+        .map(trim_docstring_prefix_newline) // WORKAROUND: Rust Gherkin doc strings start w/ new line
         .unwrap_or_default();
 
     match String::from_utf8(bytes) {

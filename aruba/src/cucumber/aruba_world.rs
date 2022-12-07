@@ -11,7 +11,8 @@ pub struct ArubaWorld {
 
 impl ArubaWorld {
     pub fn run_command(&mut self, command_line: &str) {
-        let in_temp_dir = ExistingOrFromPrefix::FromPrefix("".to_string());
+        let prefix = format!("aruba-run_command-{}", command_line);
+        let in_temp_dir = ExistingOrFromPrefix::FromPrefix(prefix);
         self.maybe_last_command_run = Some(CommandRun::new(command_line, in_temp_dir).unwrap());
     }
 
