@@ -63,7 +63,10 @@ impl Drop for ArubaWorld {
         ) {
             if let PathOrTemp::Path(path) = &command_run.in_path {
                 println!(
-                    "  ^ Preserved temp directory for debugging.\n    scenario: \"{}\"\n    command: {:?}\n    in path: {:?}",
+                    "  ^ Preserved temp directory for debugging.\
+                   \n    scenario: \"{}\"\
+                   \n    command: {:?}\
+                   \n    in path: {:?}",
                     scenario.name,
                     command_run.command.get_args().last().unwrap_or_default(),
                     path
