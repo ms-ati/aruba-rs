@@ -1,6 +1,6 @@
 pub mod api;
-pub mod steps;
+pub mod cucumber;
 
 pub mod prelude {
-    pub use crate::steps::*;
+    pub use crate::cucumber::*;
 }
