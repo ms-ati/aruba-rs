@@ -1,5 +1,5 @@
 [workspace]
 members = [
 	"aruba",
-	"examples/aruba_hello_world",
+	"examples/aruba_clap_hello_world",
 ]

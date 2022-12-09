@@ -1,5 +1,5 @@
 [package]
-name = "aruba_hello_world"
+name = "aruba_clap_hello_world"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -7,7 +7,7 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.0.17", features = ["derive"] }
+clap = { version = "4.0", features = ["derive"] }
 
 [dev-dependencies]
 aruba = { path = "../../aruba" }
@@ -15,5 +15,5 @@ cucumber = "0.17"
 futures = "0.3"
 
 [[test]]
-name = "cucumber_aruba_example" # see tests/cucumber_aruba_example.rs
+name = "cucumber_aruba_tests"   # see tests/cucumber_aruba_tests.rs
 harness = false                 # allow Cucumber to print output instead of libtest
