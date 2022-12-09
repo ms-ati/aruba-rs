@@ -1,6 +1,9 @@
 use crate::api::command_run::{ExistingOrFromPrefix, PathOrTemp};
 use crate::api::CommandRun;
+use cucumber::event::ScenarioFinished::StepFailed;
 use cucumber::gherkin::Scenario;
+use futures::{future, FutureExt};
+use std::path::Path;
 use std::process::Output;
 
 #[derive(Debug, Default, cucumber::World)]
@@ -9,7 +12,18 @@ pub struct ArubaWorld {
     pub maybe_scenario_failed: Option<Scenario>,
 }
 
-impl ArubaWorld {
+type ArubaDefaultCucumber<I> = cucumber::Cucumber<
+    ArubaWorld,
+    cucumber::parser::Basic,
+    I,
+    cucumber::runner::Basic<ArubaWorld>,
+    cucumber::writer::Summarize<cucumber::writer::Normalize<ArubaWorld, cucumber::writer::Basic>>,
+>;
+
+impl ArubaWorld
+where
+    ArubaWorld: cucumber::World,
+{
     pub fn run_command(&mut self, command_line: &str) {
         let prefix = format!("aruba-run_command-{}", command_line);
         let in_temp_dir = ExistingOrFromPrefix::FromPrefix(prefix);
@@ -52,6 +66,24 @@ impl ArubaWorld {
         let mut all = self.last_command_stdout().clone();
         all.extend(self.last_command_stderr());
         all
+    }
+
+    //
+    // Call these methods instead of cucumber::World methods: they add the `after` hook to preserve
+    // temporary directories in the case of test failure.
+    //
+
+    pub fn cucumber<I: AsRef<Path>>() -> ArubaDefaultCucumber<I> {
+        cucumber::World::cucumber().after(move |_, _, scenario, event, maybe_world| {
+            if let (StepFailed(_, _, _), Some(world)) = (event, maybe_world) {
+                world.scenario_failed(scenario);
+            }
+            future::ready(()).boxed()
+        })
+    }
+
+    pub async fn run<I: AsRef<Path>>(input: I) {
+        Self::cucumber().run_and_exit(input).await;
     }
 }
 
