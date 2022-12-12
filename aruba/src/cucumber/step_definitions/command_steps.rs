@@ -1,7 +1,7 @@
+use crate::assertions::{assert_eq_or_ne, assert_str_eq_or_ne};
 use crate::prelude::*;
 use cucumber::gherkin::Step;
 use cucumber::{then, when};
-use pretty_assertions::{assert_eq, assert_ne};
 
 #[when(expr = "I run {command_line}")]
 pub fn run_step(world: &mut ArubaWorld, command_line: CommandLineParameter) {
@@ -11,11 +11,7 @@ pub fn run_step(world: &mut ArubaWorld, command_line: CommandLineParameter) {
 #[then(expr = "the exit status code should{maybe_not}be {int}")]
 pub fn exit_status_code_step(world: &mut ArubaWorld, should: MaybeNotParameter, expected: i32) {
     let code = world.last_command_exit_status_code();
-    if should.into() {
-        assert_eq!(code, expected);
-    } else {
-        assert_ne!(code, expected)
-    }
+    assert_eq_or_ne(should.into(), code, expected);
 }
 
 #[then(expr = "the {output_channel} contains exactly: {string}")]
@@ -24,10 +20,8 @@ pub fn output_contains_exactly_step(
     channel: OutputChannelParameter,
     expected: String,
 ) {
-    match String::from_utf8(world.last_command_output_bytes(channel)) {
-        Ok(output) => assert_eq!(output.trim(), expected.trim()),
-        Err(error) => assert_eq!(error.into_bytes(), expected.as_bytes()),
-    }
+    let output = world.last_command_output_string(channel);
+    assert_str_eq_or_ne(true, sanitize_output(output), sanitize_output(expected));
 }
 
 #[then(expr = "the {output_channel} contains exactly:")]
@@ -37,11 +31,8 @@ pub fn output_contains_exactly_docstring_step(
     step: &Step,
 ) {
     let expected = step.docstring().map(|s| s.as_str()).unwrap_or_default();
-
-    match String::from_utf8(world.last_command_output_bytes(channel)) {
-        Ok(output) => assert_eq!(output.trim(), expected.trim()),
-        Err(error) => assert_eq!(error.into_bytes(), expected.as_bytes()),
-    }
+    let output = world.last_command_output_string(channel);
+    assert_str_eq_or_ne(true, sanitize_output(output), sanitize_output(expected));
 }
 
 // TODO

@@ -13,3 +13,7 @@ pub fn sanitize_temp_dir(prefix: &str) -> String {
         .replace_all(prefix.to_lowercase().as_str(), "-")
         .to_string()
 }
+
+pub fn sanitize_output<T: AsRef<str>>(output: T) -> String {
+    output.as_ref().trim().to_string()
+}

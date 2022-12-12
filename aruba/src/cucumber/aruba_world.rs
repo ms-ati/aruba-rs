@@ -77,6 +77,16 @@ where
         }
     }
 
+    pub fn last_command_output_string(&mut self, channel: OutputChannelParameter) -> String {
+        match String::from_utf8(self.last_command_output_bytes(channel)) {
+            Ok(string) => string,
+            Err(err) => panic!(
+                "Output is not a valid UTF8 string, try as bytes instead: {:?}",
+                err.as_bytes()
+            ),
+        }
+    }
+
     //
     // Call these methods instead of cucumber::World methods: they add the `after` hook to preserve
     // temporary directories in the case of test failure.
