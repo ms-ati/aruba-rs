@@ -20,3 +20,16 @@ Feature: Help text
     When I run `aruba_clap_hello_world --version`
     Then the exit status code should be 0
      And the stdout contains exactly: "aruba_clap_hello_world 0.1.0"
+
+  Scenario: Required argument missing
+    When I run `aruba_clap_hello_world`
+    Then the exit status code should be 2
+     And the stderr contains exactly:
+         """
+         error: The following required arguments were not provided:
+           --name <NAME>
+
+         Usage: aruba_clap_hello_world --name <NAME>
+
+         For more information try '--help'
+         """
