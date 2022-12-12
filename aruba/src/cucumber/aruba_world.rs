@@ -1,5 +1,6 @@
 use crate::api::command_run::{ExistingOrFromPrefix, PathOrTemp};
 use crate::api::CommandRun;
+use crate::cucumber::OutputChannelParameter;
 use cucumber::event::ScenarioFinished::StepFailed;
 use cucumber::gherkin::Scenario;
 use futures::{future, FutureExt};
@@ -66,6 +67,14 @@ where
         let mut all = self.last_command_stdout().clone();
         all.extend(self.last_command_stderr());
         all
+    }
+
+    pub fn last_command_output_bytes(&mut self, channel: OutputChannelParameter) -> Vec<u8> {
+        match channel {
+            OutputChannelParameter::AllOutput => self.last_command_all_output(),
+            OutputChannelParameter::Stdout => self.last_command_stdout().to_vec(),
+            OutputChannelParameter::Stderr => self.last_command_stderr().to_vec(),
+        }
     }
 
     //

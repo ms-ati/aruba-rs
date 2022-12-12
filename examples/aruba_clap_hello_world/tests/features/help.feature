@@ -1,6 +1,6 @@
 Feature: Help text
 
-  Scenario: If we pass the `--help` flag, we see usage documentation
+  Scenario: `--help` shows usage documentation
     When I run `aruba_clap_hello_world --help`
     Then the exit status code should be 0
      And the stdout contains exactly:
@@ -15,3 +15,8 @@ Feature: Help text
            -h, --help           Print help information
            -V, --version        Print version information
          """
+
+  Scenario: `--version` shows application version
+    When I run `aruba_clap_hello_world --version`
+    Then the exit status code should be 0
+     And the stdout contains exactly: "aruba_clap_hello_world 0.1.0"

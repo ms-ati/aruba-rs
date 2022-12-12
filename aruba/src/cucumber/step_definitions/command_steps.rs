@@ -1,10 +1,7 @@
-use crate::api::text::trim_docstring_prefix_newline;
 use crate::prelude::*;
-use bstr::ByteSlice;
 use cucumber::gherkin::Step;
 use cucumber::{then, when};
 use pretty_assertions::{assert_eq, assert_ne};
-use std::str::FromStr;
 
 #[when(expr = "I run {command_line}")]
 pub fn run_step(world: &mut ArubaWorld, command_line: CommandLineParameter) {
@@ -22,47 +19,28 @@ pub fn exit_status_code_step(world: &mut ArubaWorld, should: MaybeNotParameter, 
 }
 
 #[then(expr = "the {output_channel} contains exactly: {string}")]
-pub fn output_contains_step(
+pub fn output_contains_exactly_step(
     world: &mut ArubaWorld,
     channel: OutputChannelParameter,
     expected: String,
 ) {
-    let bytes = match channel {
-        OutputChannelParameter::AllOutput => world.last_command_all_output(),
-        OutputChannelParameter::Stdout => world.last_command_stdout().to_vec(),
-        OutputChannelParameter::Stderr => world.last_command_stderr().to_vec(),
-    };
-
-    match String::from_utf8(bytes) {
-        Ok(output) => assert_eq!(output, expected),
-        Err(error) => {
-            let output_bytes = error.into_bytes();
-            assert!(output_bytes.contains_str(&expected));
-        }
+    match String::from_utf8(world.last_command_output_bytes(channel)) {
+        Ok(output) => assert_eq!(output.trim(), expected.trim()),
+        Err(error) => assert_eq!(error.into_bytes(), expected.as_bytes()),
     }
 }
 
-#[then(regex = r"^the (output|stdout|stderr) contains exactly:$")]
-pub fn output_contains_docstring_step(world: &mut ArubaWorld, channel_string: String, step: &Step) {
-    let channel = OutputChannelParameter::from_str(&channel_string).unwrap();
+#[then(expr = "the {output_channel} contains exactly:")]
+pub fn output_contains_exactly_docstring_step(
+    world: &mut ArubaWorld,
+    channel: OutputChannelParameter,
+    step: &Step,
+) {
+    let expected = step.docstring().map(|s| s.as_str()).unwrap_or_default();
 
-    let bytes = match channel {
-        OutputChannelParameter::AllOutput => world.last_command_all_output(),
-        OutputChannelParameter::Stdout => world.last_command_stdout().to_vec(),
-        OutputChannelParameter::Stderr => world.last_command_stderr().to_vec(),
-    };
-
-    let expected = step
-        .docstring()
-        .map(trim_docstring_prefix_newline) // WORKAROUND: Rust Gherkin doc strings start w/ new line
-        .unwrap_or_default();
-
-    match String::from_utf8(bytes) {
-        Ok(output) => assert_eq!(output, expected),
-        Err(error) => {
-            let output_bytes = error.into_bytes();
-            assert!(output_bytes.contains_str(expected));
-        }
+    match String::from_utf8(world.last_command_output_bytes(channel)) {
+        Ok(output) => assert_eq!(output.trim(), expected.trim()),
+        Err(error) => assert_eq!(error.into_bytes(), expected.as_bytes()),
     }
 }
 
