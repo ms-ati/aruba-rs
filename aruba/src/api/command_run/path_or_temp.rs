@@ -86,5 +86,6 @@ mod tests {
             // Drop of PathOrTemp::Path should occur here, does *not* delete path
         }
         assert!(path.exists());
+        std::fs::remove_dir_all(path).unwrap();
     }
 }
