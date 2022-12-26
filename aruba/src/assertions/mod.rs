@@ -1,4 +1,5 @@
 use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
+use speculoos::prelude::*;
 use std::fmt::Debug;
 
 pub fn assert_eq_or_ne<T: PartialEq + Debug>(eq: bool, output: T, expected: T) {
@@ -23,8 +24,8 @@ pub fn assert_str_contains_or_not<T: AsRef<str> + PartialEq + Debug>(
     expected: T,
 ) {
     if contains {
-        assert!(output.as_ref().contains(expected.as_ref()));
+        assert_that(&output).contains(&expected);
     } else {
-        assert!(!output.as_ref().contains(expected.as_ref()));
+        assert_that(&output).does_not_contain(&expected);
     }
 }
