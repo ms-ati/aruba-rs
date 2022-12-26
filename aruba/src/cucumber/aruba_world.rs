@@ -1,14 +1,16 @@
 use crate::api::command_run::{ExistingOrFromPrefix, PathOrTemp};
 use crate::api::CommandRun;
-use crate::cucumber::OutputChannelParameter;
+use crate::cucumber::{InDirParameter, OutputChannelParameter};
 use cucumber::event::ScenarioFinished::StepFailed;
 use cucumber::gherkin::Scenario;
 use futures::{future, FutureExt};
+use std::env;
 use std::path::Path;
 use std::process::Output;
 
 #[derive(Debug, Default, cucumber::World)]
 pub struct ArubaWorld {
+    pub paths_to_prepend: Vec<String>,
     pub maybe_last_command_run: Option<CommandRun>,
     pub maybe_scenario_failed: Option<Scenario>,
 }
@@ -25,10 +27,26 @@ impl ArubaWorld
 where
     ArubaWorld: cucumber::World,
 {
-    pub fn run_command(&mut self, command_line: &str) {
-        let prefix = format!("aruba-run_command-{}", command_line);
-        let in_temp_dir = ExistingOrFromPrefix::FromPrefix(prefix);
-        self.maybe_last_command_run = Some(CommandRun::new(command_line, in_temp_dir).unwrap());
+    pub fn prepend_path(&mut self, path: &str) {
+        self.paths_to_prepend.push(path.to_string())
+    }
+
+    pub fn run_command(&mut self, command_line: &str, in_dir: InDirParameter) {
+        use InDirParameter::{InCurrDir, InTempDir};
+
+        let in_path = match in_dir {
+            InTempDir => {
+                let prefix = format!("aruba-run_command-{}", command_line);
+                ExistingOrFromPrefix::FromPrefix(prefix)
+            }
+            InCurrDir => {
+                let current = env::current_dir().unwrap_or_default();
+                ExistingOrFromPrefix::PathOrTemp(PathOrTemp::Path(current))
+            }
+        };
+
+        self.maybe_last_command_run =
+            Some(CommandRun::new(command_line, in_path, &self.paths_to_prepend).unwrap());
     }
 
     pub fn scenario_failed(&mut self, scenario: &Scenario) {

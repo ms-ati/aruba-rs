@@ -16,3 +16,15 @@ pub fn assert_str_eq_or_ne<T: AsRef<str> + PartialEq + Debug>(eq: bool, output: 
         assert_ne!(output, expected)
     }
 }
+
+pub fn assert_str_contains_or_not<T: AsRef<str> + PartialEq + Debug>(
+    contains: bool,
+    output: T,
+    expected: T,
+) {
+    if contains {
+        assert!(output.as_ref().contains(expected.as_ref()));
+    } else {
+        assert!(!output.as_ref().contains(expected.as_ref()));
+    }
+}

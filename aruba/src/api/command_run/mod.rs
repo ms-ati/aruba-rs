@@ -21,10 +21,28 @@ pub struct CommandRun {
 }
 
 impl CommandRun {
-    pub fn new(command_line: &str, in_path: ExistingOrFromPrefix) -> io::Result<CommandRun> {
+    pub fn new(
+        command_line: &str,
+        in_path: ExistingOrFromPrefix,
+        prepend_to_path: &[String],
+    ) -> io::Result<CommandRun> {
         let in_path = PathOrTemp::try_from(in_path)?;
-        let env_path = Self::env_path_prepend_target_dir()?;
+        let env_path = Self::env_path_prepended(prepend_to_path)?;
         let mut command = Self::mk_command(command_line, &in_path, &env_path);
+        // println!("{:?}", command_line);
+        // println!("{:?}", command);
+        // let c = OsString::from("PATH");
+        // println!(
+        //     "PATH={:?}",
+        //     command
+        //         .get_envs()
+        //         .find(|(k, _)| *k == c)
+        //         .unwrap()
+        //         .1
+        //         .unwrap()
+        // );
+        // println!("PWD={:?}", in_path);
+        // println!("\n");
         let process = ProcessState::Running(command.spawn()?);
 
         Ok(CommandRun {
@@ -50,17 +68,29 @@ impl CommandRun {
         command
     }
 
-    fn env_path_prepend_target_dir() -> io::Result<OsString> {
-        let env_path = env::var_os("PATH").unwrap_or_default();
-        let mut paths = vec![Self::find_project_target_dir()?];
-        paths.extend(env::split_paths(&env_path));
-        env::join_paths(paths.iter())
-            .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err.to_string()))
-    }
-
-    fn find_project_target_dir() -> io::Result<PathBuf> {
+    fn env_path_prepended(prepend_paths: &[String]) -> io::Result<OsString> {
+        let current_env_path = env::var_os("PATH").unwrap_or_default();
         let project_root_dir = Self::find_project_root_dir()?;
-        Ok(project_root_dir.join("target").join("debug"))
+
+        let mut paths_with_project_root: Vec<PathBuf> = prepend_paths
+            .iter()
+            .map(|path_string| {
+                let path = PathBuf::from(path_string);
+                match path.strip_prefix("${PROJECT_ROOT}") {
+                    Ok(stripped) => project_root_dir.join(stripped),
+                    Err(_) => path,
+                }
+            })
+            .collect();
+
+        if paths_with_project_root.is_empty() {
+            paths_with_project_root.push(project_root_dir.join("target/debug"))
+        }
+
+        paths_with_project_root.extend(env::split_paths(&current_env_path));
+
+        env::join_paths(paths_with_project_root.iter())
+            .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err.to_string()))
     }
 
     fn find_project_root_dir() -> io::Result<PathBuf> {

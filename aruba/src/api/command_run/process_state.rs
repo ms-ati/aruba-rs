@@ -19,7 +19,7 @@ impl ProcessState {
         }
 
         match self {
-            ProcessState::Stopped(ref output) => Ok(output),
+            Self::Stopped(ref output) => Ok(output),
             _ => unreachable!(),
         }
     }
