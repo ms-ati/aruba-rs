@@ -11,7 +11,7 @@ clap = { version = "4.0", features = ["derive"] }
 
 [dev-dependencies]
 aruba = { path = "../../aruba" }
-cucumber = "0.18"
+cucumber = "0.19"
 futures = "0.3"
 
 [[test]]
